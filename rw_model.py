@@ -61,7 +61,7 @@ class RewardModel(nn.Module):
         assert len(input_ids.shape) == 2
         bs = input_ids.shape[0] // 2
         seq_len = input_ids.shape[1]
-
+        # 分成了两部分,第一部分为chosen，第二部分为rejected,形状为bsxseqx1
         chosen_ids = input_ids[:bs]  # bs x seq x 1
         rejected_ids = input_ids[bs:]
         chosen_rewards = rewards[:bs]
@@ -79,7 +79,7 @@ class RewardModel(nn.Module):
             c_ind = c_inds[self.num_padding_at_beginning].item() if len(
                 c_inds
             ) > self.num_padding_at_beginning else seq_len  # OPT model pads the first token, so we need to use the second padding token as the end of the sequence
-            check_divergence = (chosen_id != rejected_id).nonzero()
+            check_divergence = (chosen_id != rejected_id).nonzero() # chosen和reject不同的部分
 
             if len(check_divergence) == 0:
                 end_ind = rejected_reward.size(-1)
@@ -98,7 +98,7 @@ class RewardModel(nn.Module):
             chosen_mean_scores.append(
                 chosen_reward[c_ind - 1])  #use the end score for reference
             rejected_mean_scores.append(rejected_reward[r_ind - 1])
-
+            # 从不一样的结果开始计算V的值，让差异尽量大
             loss += -torch.nn.functional.logsigmoid(c_truncated_reward -
                                                     r_truncated_reward).mean()
 
